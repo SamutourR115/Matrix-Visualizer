@@ -2,22 +2,24 @@
 
 struct appWidgets_t{
     GtkWidget *window;        
-    GtkWidget *grid_matrix;  
-    GtkWidget *spin_rows;     
-    GtkWidget *spin_cols;     
+    GtkWidget **grid_matrix;  
+    GtkWidget **spin_rows;     
+    GtkWidget **spin_cols;     
 };
 
 struct appContext_t{
-    Matrix *matrix_a;         
+    Matrix **matrix;         
     appWidgets *widgets; 
+    unsigned int count;
+    unsigned int capacity;
 };
 
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data){
     appContext *ctx = (appContext *)user_data;
     if (ctx) {
-        if (ctx->matrix_a){
-            free_matrix(ctx->matrix_a);
+        if (ctx->matrix){
+            free_matrix(ctx->matrix);
         }
         if (ctx->widgets){
             free(ctx->widgets);
@@ -33,32 +35,35 @@ void create_window(GtkApplication *app, gpointer userData){
     if (!ctx) return;
 
     ctx->widgets = malloc(sizeof(appWidgets));
-    if (!ctx->widgets){
-        free(ctx);
-        return;
+    if (!ctx->widgets){ free(ctx->widgets); free(ctx); return; }
+
+    ctx->capacity = 3;
+    ctx->count = 0;
+
+    ctx->matrix = malloc(ctx->capacity * sizeof(Matrix*));
+    if(!ctx->matrix){ free(ctx->widgets); free(ctx); return; }
+
+    ctx->widgets->grid_matrix = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->grid_matrix){ free(ctx->matrix); free(ctx->widgets); free(ctx); return; }
+
+    ctx->widgets->spin_rows = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->spin_rows){ 
+        free(ctx->widgets->grid_matrix); 
+        free(ctx->matrix); 
+        free(ctx->widgets); 
+        free(ctx); 
+        return; 
     }
 
-    ctx->matrix_a = create_matrix(3, 3);
-
-    ctx->widgets->window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(ctx->widgets->window), "MatrixCalculator");
-    gtk_window_set_default_size(GTK_WINDOW(ctx->widgets->window), 700, 500);
-
-    g_signal_connect(ctx->widgets->window, "destroy", G_CALLBACK(on_destroy_window), ctx);
-
-    GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_window_set_child(GTK_WINDOW(ctx->widgets->window), main_box);
-
-    GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_box_append(GTK_BOX(main_box), left_box);
-    
-    // TODO: Ajouter ici vos GtkSpinButton pour les lignes/colonnes
-    // et les stocker dans ctx->widgets->spin_rows et spin_cols
-
-    ctx->widgets->grid_matrix = gtk_grid_new();
-    gtk_box_append(GTK_BOX(main_box), ctx->widgets->grid_matrix);
-
-    gtk_window_present(GTK_WINDOW(ctx->widgets->window));
+    ctx->widgets->spin_cols = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->spin_cols){ 
+        free(ctx->widgets->spin_rows);
+        free(ctx->widgets->grid_matrix); 
+        free(ctx->matrix); 
+        free(ctx->widgets); 
+        free(ctx); 
+        return; 
+    }
 }
 
 void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
@@ -72,9 +77,9 @@ void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
     // Sécurité : Éviter de recréer la matrice si les dimensions n'ont pas changé
     // (Optionnel, mais plus performant)
 
-    free_matrix(ctx->matrix_a);
+    free_matrix(ctx->matrix);
 
-    ctx->matrix_a = create_matrix(new_rows, new_cols);
+    ctx->matrix = create_matrix(new_rows, new_cols);
 
     // 5. TODO: Appel de votre fonction pour mettre à jour la grille graphique
     // clean_and_rebuild_grid(ctx);

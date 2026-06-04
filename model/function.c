@@ -3,7 +3,7 @@
 struct matrix_t{
     unsigned int rows;
     unsigned int cols;
-    unsigned int **matrix;
+    int **matrix;
 };
 
 Matrix *create_matrix(unsigned int rows, unsigned int cols){
@@ -15,13 +15,13 @@ Matrix *create_matrix(unsigned int rows, unsigned int cols){
         return NULL;
     }
 
-    if(!(m->matrix = malloc(rows * sizeof(unsigned int*)))){
+    if(!(m->matrix = malloc(rows * sizeof(int*)))){
         free(m);
         return NULL;
     }
 
     for(i = 0; i < rows; i++){
-        m->matrix[i] = malloc(cols * sizeof(unsigned int));
+        m->matrix[i] = malloc(cols * sizeof(int));
         if(!m->matrix[i]){
             for(j = 0; j < i; j++){
                 free(m->matrix[j]);
@@ -100,8 +100,8 @@ unsigned short fill_matrix(Matrix *a){
 
     for(unsigned int i = 0; i < rows; i++){
         for(unsigned int j = 0; j < cols;j++){
-            printf("Fill the matrix, you are on the [%d][%d]case:", i+1, j+1);
-            scanf("%u",&a->matrix[i][j]);
+            printf("Fill the matrix, you are on the [%u][%u]case:", i+1, j+1);
+            scanf("%d",&a->matrix[i][j]);
         }
     }
     return 1;
@@ -112,7 +112,7 @@ unsigned short seeing_matrix(Matrix *a){
 
     for(unsigned int i = 0; i < a->rows; i++){
         for(unsigned int j = 0; j < a->cols; j++){
-            printf(" %u ",a->matrix[i][j]);
+            printf(" %d ",a->matrix[i][j]);
         }
         printf("\n");
     }
