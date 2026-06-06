@@ -119,3 +119,15 @@ unsigned short seeing_matrix(Matrix *a){
     printf("\n");
     return 1;
 }
+
+unsigned int get_rows(Matrix *m){
+    if(m == NULL) { return 0;}
+
+    return m->rows;
+}
+
+unsigned int get_cols(Matrix *m){
+    if(m == NULL) { return 0;}
+
+    return m->cols;
+}

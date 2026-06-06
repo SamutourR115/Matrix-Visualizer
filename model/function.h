@@ -106,4 +106,38 @@ unsigned short fill_matrix(Matrix *a);
  *      1 All is good
  */
 unsigned short seeing_matrix(Matrix *a);
+
+/**
+ * get_cols
+ * 
+ * Getter for rows
+ * 
+ * @pre: m != NULL
+ * @post: nb rows
+ * 
+ * @param m : Pointer to the matrix m
+ * 
+ * 
+ * @return : 
+ *      0 : Allacations issues
+ *      Numbers rows of the matrix m
+ */
+unsigned int get_rows(Matrix *m);
+
+/**
+ * get_cols
+ * 
+ * Getter for cols
+ * 
+ * @pre: m != NULL
+ * @post: nb cols
+ * 
+ * @param m : Pointer to the matrix m
+ * 
+ * 
+ * @return : 
+ *      0 : Allacations issues
+ *      Numbers cols of the matrix m
+ */
+unsigned int get_cols(Matrix *m);
 #endif
