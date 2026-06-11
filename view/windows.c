@@ -22,12 +22,14 @@ static void add_matrix_tab(GtkWidget *widget, gpointer user_data);
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data);
 
+static void clean_and_rebuild_grid(appContext *ctx, int page);
+
 /**
  * Definition of static function
  */
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data){
-    if(user_data == NULL) { return; }
+    if (widget == NULL || user_data == NULL) return;
     appContext *ctx = (appContext *)user_data;
     for(unsigned int i = 0; i < ctx->count; i++){
         free_matrix(ctx->matrix[i]);
@@ -45,7 +47,7 @@ static void on_destroy_window(GtkWidget *widget, gpointer user_data){
 }
 
 static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
-    if (widget == NULL) return;
+    if (widget == NULL || user_data == NULL) return;
     appContext *ctx = (appContext *) user_data;
     if (!ctx) return;
 
@@ -62,15 +64,16 @@ static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
     free_matrix(ctx->matrix[page]);
     ctx->matrix[page] = create_matrix(new_rows, new_cols);
 
-    // TODO: clean_and_rebuild_grid(ctx, page);
+    clean_and_rebuild_grid(ctx, page);
 }
 
 static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
+    if (widget == NULL || user_data == NULL) return;
     (void)widget;
     appContext *ctx = (appContext *)user_data;
     if(!ctx) return;
 
-    Matrix *new_matrix = create_matrix(3, 3);
+    Matrix *new_matrix = create_matrix(1, 1);
     if(!new_matrix) return;
 
     if(ctx->count == ctx->capacity){
@@ -127,8 +130,24 @@ static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
     ctx->widgets->spin_cols[ctx->count] = spin_c;
 
     ctx->count++;
-
 }
+
+static void clean_and_rebuild_grid(appContext *ctx, int page){
+    if (ctx == NULL) return;
+
+    GtkWidget *child;
+    while((child = gtk_widget_get_first_child(ctx->widgets->grid_matrix[page])) != NULL){
+        gtk_grid_remove(GTK_GRID(ctx->widgets->grid_matrix[page]), child);
+    }
+
+    for(unsigned int i = 0; i < get_cols(ctx->matrix[page]); i++){
+        for(unsigned int j = 0; j < get_rows(ctx->matrix[page]); j++){
+            GtkWidget *entry = gtk_entry_new();
+            gtk_grid_attach(GTK_GRID(ctx->widgets->grid_matrix[page]), entry, i, j, 1, 1);
+        }
+    }
+}
+
 
 void create_window(GtkApplication *app, gpointer userData){
     if (app == NULL) return;
