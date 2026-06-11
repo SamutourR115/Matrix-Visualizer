@@ -15,6 +15,16 @@ struct appContext_t{
     unsigned int capacity;
 };
 
+/**
+ * Declaration of static function
+ */
+static void add_matrix_tab(GtkWidget *widget, gpointer user_data);
+
+static void on_destroy_window(GtkWidget *widget, gpointer user_data);
+
+/**
+ * Definition of static function
+ */
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data){
     if(user_data == NULL) { return; }
@@ -34,7 +44,29 @@ static void on_destroy_window(GtkWidget *widget, gpointer user_data){
     free(ctx);
 }
 
-static void add_matrix_tab(gpointer user_data){
+static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
+    if (widget == NULL) return;
+    appContext *ctx = (appContext *) user_data;
+    if (!ctx) return;
+
+    int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(ctx->widgets->notebook));
+    if(page < 0) return;
+
+    unsigned int new_rows = (unsigned int)gtk_spin_button_get_value(
+        GTK_SPIN_BUTTON(ctx->widgets->spin_rows[page]));
+    unsigned int new_cols = (unsigned int)gtk_spin_button_get_value(
+        GTK_SPIN_BUTTON(ctx->widgets->spin_cols[page]));
+
+    if(get_rows(ctx->matrix[page]) == new_rows && get_cols(ctx->matrix[page]) == new_cols) return;
+
+    free_matrix(ctx->matrix[page]);
+    ctx->matrix[page] = create_matrix(new_rows, new_cols);
+
+    // TODO: clean_and_rebuild_grid(ctx, page);
+}
+
+static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
+    (void)widget;
     appContext *ctx = (appContext *)user_data;
     if(!ctx) return;
 
@@ -83,6 +115,9 @@ static void add_matrix_tab(gpointer user_data){
     gtk_box_append(GTK_BOX(tab_box), right_box);
 
     gtk_notebook_append_page(GTK_NOTEBOOK(ctx->widgets->notebook), tab_box, gtk_label_new(label));
+
+    g_signal_connect(spin_r, "value-changed", G_CALLBACK(on_dimensions_changed), ctx);
+    g_signal_connect(spin_c, "value-changed", G_CALLBACK(on_dimensions_changed), ctx);
 
     ctx->matrix[ctx->count] = new_matrix;
 
@@ -133,10 +168,9 @@ void create_window(GtkApplication *app, gpointer userData){
     }
 
     ctx->widgets->window = gtk_application_window_new(app);
-    gtk_window_set_title(ctx->widgets->window,"Matrix Visualiser");
-    gtk_window_set_default_size(ctx->widgets->window,700,500);
+    gtk_window_set_title(GTK_WINDOW(ctx->widgets->window), "Matrix Visualiser");
+    gtk_window_set_default_size(GTK_WINDOW(ctx->widgets->window), 700, 500);
     g_signal_connect(ctx->widgets->window, "destroy",G_CALLBACK(on_destroy_window), ctx);
-
     
     GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_window_set_child(GTK_WINDOW(ctx->widgets->window), main_box);
@@ -151,27 +185,7 @@ void create_window(GtkApplication *app, gpointer userData){
     ctx->widgets->notebook = gtk_notebook_new();
     gtk_box_append(GTK_BOX(main_box), ctx->widgets->notebook);
 
-    gtk_window_present(ctx->widgets->window);
-    add_matrix_tab(ctx);
+    gtk_window_present(GTK_WINDOW(ctx->widgets->window));
+    add_matrix_tab(NULL,ctx);
 
-
-}
-
-void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
-    if (widget == NULL) return;
-    appContext *ctx = (appContext *) user_data;
-    if (!ctx) return;
-
-    unsigned int new_rows = (unsigned int)gtk_spin_button_get_value(GTK_SPIN_BUTTON(ctx->widgets->spin_rows));
-    unsigned int new_cols = (unsigned int)gtk_spin_button_get_value(GTK_SPIN_BUTTON(ctx->widgets->spin_cols));
-
-    // Sécurité : Éviter de recréer la matrice si les dimensions n'ont pas changé
-
-
-    free_matrix(ctx->matrix);
-
-    ctx->matrix = create_matrix(new_rows, new_cols);
-
-    // 5. TODO: Appel de votre fonction pour mettre à jour la grille graphique
-    // clean_and_rebuild_grid(ctx);
 }
