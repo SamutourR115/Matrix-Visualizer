@@ -5,7 +5,9 @@ struct appWidgets_t{
     GtkWidget *notebook;     
     GtkWidget **grid_matrix;  
     GtkWidget **spin_rows;     
-    GtkWidget **spin_cols;     
+    GtkWidget **spin_cols;
+    GtkWidget **dropdown_a; 
+    GtkWidget **dropdown_b;    
 };
 
 struct appContext_t{
@@ -18,6 +20,10 @@ struct appContext_t{
 /**
  * Declaration of static function
  */
+static appContext *init_context(void);
+
+static int init_widgets(appContext *ctx, GtkApplication *app);
+
 static void add_matrix_tab(GtkWidget *widget, gpointer user_data);
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data);
@@ -28,8 +34,72 @@ static void clean_and_rebuild_grid(appContext *ctx, int page);
  * Definition of static function
  */
 
+static appContext *init_context(void){
+    appContext *ctx = malloc(sizeof(appContext));
+    if (!ctx) return NULL;
+
+    ctx->widgets = malloc(sizeof(appWidgets));
+    if (!ctx->widgets){ free(ctx); return NULL; }
+
+    ctx->capacity = 3;
+    ctx->count = 0;
+
+    ctx->matrix = malloc(ctx->capacity * sizeof(Matrix*));
+    if(!ctx->matrix){ free(ctx->widgets); free(ctx); return NULL; }
+
+    ctx->widgets->grid_matrix = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->grid_matrix){ free(ctx->matrix); free(ctx->widgets); free(ctx); return NULL; }
+
+    ctx->widgets->spin_rows = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->spin_rows){ 
+        free(ctx->widgets->grid_matrix); 
+        free(ctx->matrix); 
+        free(ctx->widgets); 
+        free(ctx); 
+        return NULL;
+    }
+
+    ctx->widgets->spin_cols = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->spin_cols){ 
+        free(ctx->widgets->spin_rows);
+        free(ctx->widgets->grid_matrix); 
+        free(ctx->matrix); 
+        free(ctx->widgets); 
+        free(ctx); 
+        return NULL; 
+    }
+
+    return ctx;
+}
+
+static int init_widgets(appContext *ctx, GtkApplication *app){
+    if(!ctx || !app) return 0;
+
+    ctx->widgets->window = gtk_application_window_new(app);
+    gtk_window_set_title(GTK_WINDOW(ctx->widgets->window), "Matrix Visualiser");
+    gtk_window_set_default_size(GTK_WINDOW(ctx->widgets->window), 700, 500);
+    g_signal_connect(ctx->widgets->window, "destroy",G_CALLBACK(on_destroy_window), ctx);
+    
+    GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_window_set_child(GTK_WINDOW(ctx->widgets->window), main_box);
+    
+    GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_box_append(GTK_BOX(main_box), left_box);
+
+    GtkWidget *btn_add = gtk_button_new_with_label("+");
+    g_signal_connect(btn_add, "clicked", G_CALLBACK(add_matrix_tab), ctx);
+    gtk_box_append(GTK_BOX(left_box), btn_add);
+
+    ctx->widgets->notebook = gtk_notebook_new();
+    gtk_box_append(GTK_BOX(main_box), ctx->widgets->notebook);
+
+    gtk_window_present(GTK_WINDOW(ctx->widgets->window));
+
+    return 1;
+}
+
 static void on_destroy_window(GtkWidget *widget, gpointer user_data){
-    if (widget == NULL || user_data == NULL) return;
+    if (widget == NULL) return;
     appContext *ctx = (appContext *)user_data;
     for(unsigned int i = 0; i < ctx->count; i++){
         free_matrix(ctx->matrix[i]);
@@ -47,7 +117,7 @@ static void on_destroy_window(GtkWidget *widget, gpointer user_data){
 }
 
 static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
-    if (widget == NULL || user_data == NULL) return;
+    if (widget == NULL) return;
     appContext *ctx = (appContext *) user_data;
     if (!ctx) return;
 
@@ -68,7 +138,7 @@ static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
 }
 
 static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
-    if (widget == NULL || user_data == NULL) return;
+    if (widget == NULL) return;
     (void)widget;
     appContext *ctx = (appContext *)user_data;
     if(!ctx) return;
@@ -148,63 +218,18 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
     }
 }
 
-
+/**
+ * Definition of function
+ */
 void create_window(GtkApplication *app, gpointer userData){
     if (app == NULL) return;
 
-    appContext *ctx = malloc(sizeof(appContext));
-    if (!ctx) return;
+    appContext *ctx = init_context();
+    if(!ctx) return;
 
-    ctx->widgets = malloc(sizeof(appWidgets));
-    if (!ctx->widgets){ free(ctx); return; }
-
-    ctx->capacity = 3;
-    ctx->count = 0;
-
-    ctx->matrix = malloc(ctx->capacity * sizeof(Matrix*));
-    if(!ctx->matrix){ free(ctx->widgets); free(ctx); return; }
-
-    ctx->widgets->grid_matrix = malloc(ctx->capacity * sizeof(GtkWidget*));
-    if(!ctx->widgets->grid_matrix){ free(ctx->matrix); free(ctx->widgets); free(ctx); return; }
-
-    ctx->widgets->spin_rows = malloc(ctx->capacity * sizeof(GtkWidget*));
-    if(!ctx->widgets->spin_rows){ 
-        free(ctx->widgets->grid_matrix); 
-        free(ctx->matrix); 
-        free(ctx->widgets); 
-        free(ctx); 
-        return; 
+    if(!(init_widgets(ctx,app))){
+        free(ctx);
     }
 
-    ctx->widgets->spin_cols = malloc(ctx->capacity * sizeof(GtkWidget*));
-    if(!ctx->widgets->spin_cols){ 
-        free(ctx->widgets->spin_rows);
-        free(ctx->widgets->grid_matrix); 
-        free(ctx->matrix); 
-        free(ctx->widgets); 
-        free(ctx); 
-        return; 
-    }
-
-    ctx->widgets->window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(ctx->widgets->window), "Matrix Visualiser");
-    gtk_window_set_default_size(GTK_WINDOW(ctx->widgets->window), 700, 500);
-    g_signal_connect(ctx->widgets->window, "destroy",G_CALLBACK(on_destroy_window), ctx);
-    
-    GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_window_set_child(GTK_WINDOW(ctx->widgets->window), main_box);
-    
-    GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_box_append(GTK_BOX(main_box), left_box);
-
-    GtkWidget *btn_add = gtk_button_new_with_label("+");
-    g_signal_connect(btn_add, "clicked", G_CALLBACK(add_matrix_tab), ctx);
-    gtk_box_append(GTK_BOX(left_box), btn_add);
-
-    ctx->widgets->notebook = gtk_notebook_new();
-    gtk_box_append(GTK_BOX(main_box), ctx->widgets->notebook);
-
-    gtk_window_present(GTK_WINDOW(ctx->widgets->window));
     add_matrix_tab(NULL,ctx);
-
 }
