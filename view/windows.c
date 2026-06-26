@@ -111,6 +111,9 @@ static void on_dimensions_changed(GtkWidget *widget, gpointer user_data);
  */
 static void clean_and_rebuild_grid(appContext *ctx, int page);
 
+
+static void free_context(appContext *ctx);
+
 /**
  * Definition of static function
  */
@@ -181,20 +184,7 @@ static int init_widgets(appContext *ctx, GtkApplication *app){
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data){
     if (!widget) return;
-    appContext *ctx = (appContext *)user_data;
-    for(unsigned int i = 0; i < ctx->count; i++){
-        free_matrix(ctx->matrix[i]);
-    }
-
-    if(ctx->widgets){
-        free(ctx->widgets->grid_matrix);
-        free(ctx->widgets->spin_rows);
-        free(ctx->widgets->spin_cols);
-        free(ctx->widgets);
-    }
-
-    free(ctx->matrix);
-    free(ctx);
+    free_context((appContext *)user_data);
 }
 
 static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
@@ -299,6 +289,23 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
     }
 }
 
+static void free_context(appContext *ctx){
+    if (!ctx) return;
+    for(unsigned int i = 0; i < ctx->count; i++){
+        free_matrix(ctx->matrix[i]);
+    }
+
+    if(ctx->widgets){
+        free(ctx->widgets->grid_matrix);
+        free(ctx->widgets->spin_rows);
+        free(ctx->widgets->spin_cols);
+        free(ctx->widgets);
+    }
+
+    free(ctx->matrix);
+    free(ctx);
+}
+
 /**
  * Definition of function
  */
@@ -309,7 +316,8 @@ void create_window(GtkApplication *app, gpointer userData){
     if(!ctx) return;
 
     if(!(init_widgets(ctx,app))){
-        free(ctx);
+        free_context(ctx);
+        return;
     }
 
     add_matrix_tab(NULL,ctx);
