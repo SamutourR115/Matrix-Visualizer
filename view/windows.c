@@ -20,14 +20,95 @@ struct appContext_t{
 /**
  * Declaration of static function
  */
+
+/**
+ * init_context
+ * 
+ * Function to init the context 
+ * 
+ * @pre : / 
+ * @post : / 
+ * 
+ * @param : / 
+ * 
+ * @return : a appContext struct
+ */
 static appContext *init_context(void);
 
+/**
+ * init_widgets
+ * 
+ * Function who wan init all the widgets
+ * 
+ * @pre: ctx != NULL & app != NULL
+ * @post : / 
+ * 
+ * @param ctx pointers to appContext struct
+ * @param app pointers to GtkApplications struct
+ * 
+ * @return : 0 if memory problem , 1 all is goo
+ *      
+ */
 static int init_widgets(appContext *ctx, GtkApplication *app);
 
+/**
+ * add_matrix_tab
+ * 
+ * Function to adding a matrix dynamically in the struct
+ * 
+ * @pre : widget != NULL & user_data != NULL
+ * @post : Matrix added
+ * 
+ * @param widget Widget for added the matrix 
+ * @param user_data Needed for a proper operation 
+ * 
+ * @return : / 
+ */
 static void add_matrix_tab(GtkWidget *widget, gpointer user_data);
 
+/**
+ * on_destroy_window
+ * 
+ * Function for destroying the windows
+ * 
+ * @pre : widget != NULL & user_data != NULL
+ * @post : Windows destroy properly
+ * 
+ * @param widget Widget for added the matrix 
+ * @param user_data Needed for a proper operation  
+ * 
+ * @return : / 
+ */
 static void on_destroy_window(GtkWidget *widget, gpointer user_data);
 
+/**
+ * on_dimensions_changed
+ * 
+ * Function to change the dimension of the matrix dynamically
+ * 
+ * @pre : widget != NULL & user_data != NULL
+ * @post : Dimension change
+ * 
+ * @param widget Widget for added the matrix 
+ * @param user_data Needed for a proper operation  
+ * `
+ * @return : / 
+ */
+static void on_dimensions_changed(GtkWidget *widget, gpointer user_data);
+
+/**
+ * clean_and_rebuild_grid
+ * 
+ * Function to build and clean the newest page of a matrix
+ * 
+ * @pre: ctx != NULL & page > 0
+ * @post: matrix have more page
+ * 
+ * @param ctx pointers to a appContext struct
+ * @param page page needed
+ * 
+ * @return /
+ */
 static void clean_and_rebuild_grid(appContext *ctx, int page);
 
 /**
@@ -99,7 +180,7 @@ static int init_widgets(appContext *ctx, GtkApplication *app){
 }
 
 static void on_destroy_window(GtkWidget *widget, gpointer user_data){
-    if (widget == NULL) return;
+    if (!widget) return;
     appContext *ctx = (appContext *)user_data;
     for(unsigned int i = 0; i < ctx->count; i++){
         free_matrix(ctx->matrix[i]);
@@ -117,7 +198,7 @@ static void on_destroy_window(GtkWidget *widget, gpointer user_data){
 }
 
 static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
-    if (widget == NULL) return;
+    if (!widget) return;
     appContext *ctx = (appContext *) user_data;
     if (!ctx) return;
 
@@ -138,7 +219,7 @@ static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
 }
 
 static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
-    if (widget == NULL) return;
+    if (!widget) return;
     (void)widget;
     appContext *ctx = (appContext *)user_data;
     if(!ctx) return;
@@ -203,7 +284,7 @@ static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
 }
 
 static void clean_and_rebuild_grid(appContext *ctx, int page){
-    if (ctx == NULL) return;
+    if (!ctx) return;
 
     GtkWidget *child;
     while((child = gtk_widget_get_first_child(ctx->widgets->grid_matrix[page])) != NULL){
@@ -222,7 +303,7 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
  * Definition of function
  */
 void create_window(GtkApplication *app, gpointer userData){
-    if (app == NULL) return;
+    if (!app) return;
 
     appContext *ctx = init_context();
     if(!ctx) return;
