@@ -15,6 +15,7 @@ struct appContext_t{
     appWidgets *widgets; 
     unsigned int count;
     unsigned int capacity;
+    GtkStringList *matrix_names;
 };
 
 /**
@@ -153,11 +154,36 @@ static appContext *init_context(void){
         return NULL; 
     }
 
+    ctx->widgets->dropdown_a = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->dropdown_a){ 
+        free(ctx->widgets->spin_cols);
+        free(ctx->widgets->spin_rows);
+        free(ctx->widgets->grid_matrix); 
+        free(ctx->matrix); 
+        free(ctx->widgets); 
+        free(ctx); 
+        return NULL; 
+    }
+
+    ctx->widgets->dropdown_b = malloc(ctx->capacity * sizeof(GtkWidget*));
+    if(!ctx->widgets->dropdown_b){ 
+        free(ctx->widgets->dropdown_a);
+        free(ctx->widgets->spin_cols);
+        free(ctx->widgets->spin_rows);
+        free(ctx->widgets->grid_matrix); 
+        free(ctx->matrix); 
+        free(ctx->widgets); 
+        free(ctx); 
+        return NULL; 
+    }
+
     return ctx;
 }
 
 static int init_widgets(appContext *ctx, GtkApplication *app){
     if(!ctx || !app) return 0;
+
+    ctx->matrix_names = gtk_string_list_new(NULL);
 
     ctx->widgets->window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(ctx->widgets->window), "Matrix Visualiser");
@@ -232,9 +258,17 @@ static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
         if(!tmp_cols) return; 
         ctx->widgets->spin_cols= tmp_cols;
 
-        GtkWidget **tmp_matrix = realloc(ctx->widgets->grid_matrix, ctx->capacity * sizeof(GtkWidget*));
-        if(!tmp_matrix) return; 
-        ctx->widgets->grid_matrix= tmp_matrix;
+        GtkWidget **tmp_grid = realloc(ctx->widgets->grid_matrix, ctx->capacity * sizeof(GtkWidget*));
+        if(!tmp_grid) return; 
+        ctx->widgets->grid_matrix= tmp_grid;
+
+        GtkWidget **tmp_dropdown_a = realloc(ctx->widgets->dropdown_a, ctx->capacity * sizeof(GtkWidget*));
+        if(!tmp_dropdown_a) return; 
+        ctx->widgets->dropdown_a= tmp_dropdown_a;
+
+        GtkWidget **tmp_dropdown_b = realloc(ctx->widgets->dropdown_b, ctx->capacity * sizeof(GtkWidget*));
+        if(!tmp_dropdown_b) return; 
+        ctx->widgets->dropdown_b= tmp_dropdown_b;
     }
 
     GtkWidget *tab_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
@@ -251,12 +285,19 @@ static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
     char label[8];
     snprintf(label, sizeof(label), "M%u", ctx->count + 1);
 
+    gtk_string_list_append(ctx->matrix_names, label);
+
     GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     GtkWidget *spin_r = gtk_spin_button_new_with_range(1, 10, 1);
     GtkWidget *spin_c = gtk_spin_button_new_with_range(1, 10, 1);
+    GtkWidget *drop_a = gtk_drop_down_new(G_LIST_MODEL(ctx->matrix_names), NULL);
+    GtkWidget *drop_b = gtk_drop_down_new(G_LIST_MODEL(ctx->matrix_names), NULL);
     gtk_box_append(GTK_BOX(right_box), spin_r);
     gtk_box_append(GTK_BOX(right_box), spin_c);
     gtk_box_append(GTK_BOX(tab_box), right_box);
+    gtk_box_append(GTK_BOX(right_box), drop_a);
+    gtk_box_append(GTK_BOX(right_box), drop_b);
+
 
     gtk_notebook_append_page(GTK_NOTEBOOK(ctx->widgets->notebook), tab_box, gtk_label_new(label));
 
@@ -269,6 +310,9 @@ static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
 
     ctx->widgets->spin_rows[ctx->count] = spin_r;
     ctx->widgets->spin_cols[ctx->count] = spin_c;
+
+    ctx->widgets->dropdown_a[ctx->count] = drop_a;
+    ctx->widgets->dropdown_b[ctx->count] = drop_b;
 
     ctx->count++;
 }
@@ -296,6 +340,8 @@ static void free_context(appContext *ctx){
     }
 
     if(ctx->widgets){
+        free(ctx->widgets->dropdown_a);
+        free(ctx->widgets->dropdown_b);
         free(ctx->widgets->grid_matrix);
         free(ctx->widgets->spin_rows);
         free(ctx->widgets->spin_cols);
