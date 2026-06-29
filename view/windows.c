@@ -112,7 +112,33 @@ static void on_dimensions_changed(GtkWidget *widget, gpointer user_data);
  */
 static void clean_and_rebuild_grid(appContext *ctx, int page);
 
+/**
+ * on_add_matrices
+ * 
+ * addition to matrix together 
+ * 
+ * @pre : widget != NULL & user_data != NULL
+ * @post: additionning 2 matrix
+ * 
+ * @param widget Widget for add the matrix 
+ * @param user_data Needed for a proper operation 
+ * 
+ * @return: / 
+ */
+static void on_add_matrices(GtkWidget *widget, gpointer user_data);
 
+/**
+ * free_context
+ * 
+ * Free all the context on the heap
+ * 
+ * @pre : ctx !=NULL
+ * @post: Free the all context
+ * 
+ * @param ctx : Pointer to the appCOntext
+ * 
+ * @return : / 
+ */
 static void free_context(appContext *ctx);
 
 /**
@@ -331,6 +357,15 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
             gtk_grid_attach(GTK_GRID(ctx->widgets->grid_matrix[page]), entry, i, j, 1, 1);
         }
     }
+}
+
+
+static void on_add_matrices(GtkWidget *widget, gpointer user_data){
+    if (!widget) return;
+    appContext *ctx = (appContext *) user_data;
+    if (!ctx) return;
+
+     = ctx->widgets->dropdown_a
 }
 
 static void free_context(appContext *ctx){
