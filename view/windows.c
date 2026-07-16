@@ -142,6 +142,21 @@ static void on_add_matrices(GtkWidget *widget, gpointer user_data);
 static void free_context(appContext *ctx);
 
 /**
+ * add_tab_with_matrix
+ * 
+ * Create a new notebook
+ * 
+ * @pre : ctx !=NULL
+ * @post: Create a new notebook
+ * 
+ * @param ctx : Pointer to the appCOntext
+ * @param m : Pointer to a matrix
+ * 
+ * @return : / 
+ */
+static void add_tab_with_matrix(appContext *ctx, Matrix *m);
+
+/**
  * Definition of static function
  */
 
@@ -260,16 +275,19 @@ static void on_dimensions_changed(GtkWidget *widget, gpointer user_data){
     clean_and_rebuild_grid(ctx, page);
 }
 
-static void add_matrix_tab(GtkWidget *widget,gpointer user_data){
-    if (!widget) return;
+static void add_matrix_tab(GtkWidget *widget, gpointer user_data){
     (void)widget;
     appContext *ctx = (appContext *)user_data;
+    add_tab_with_matrix(ctx, NULL);
+}
+
+static void add_tab_with_matrix(appContext *ctx, Matrix *m){
     if(!ctx) return;
-
-    Matrix *new_matrix = create_matrix(1, 1);
+    
+    Matrix *new_matrix = (m != NULL) ? m : create_matrix(1, 1);
     if(!new_matrix) return;
-
-    if(ctx->count == ctx->capacity){
+    
+     if(ctx->count == ctx->capacity){
         ctx->capacity *= 2;
 
         Matrix **tmp = realloc(ctx->matrix, ctx->capacity * sizeof(Matrix*));
@@ -361,11 +379,21 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
 
 
 static void on_add_matrices(GtkWidget *widget, gpointer user_data){
-    if (!widget) return;
+    (void)widget;
     appContext *ctx = (appContext *) user_data;
     if (!ctx) return;
 
-     = ctx->widgets->dropdown_a
+    int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(ctx->widgets->notebook));
+    guint index_a = gtk_drop_down_get_selected(GTK_DROP_DOWN(ctx->widgets->dropdown_a[page]));
+    guint index_b = gtk_drop_down_get_selected(GTK_DROP_DOWN(ctx->widgets->dropdown_b[page]));
+
+    Matrix *a = ctx->matrix[index_a];
+    Matrix *b = ctx->matrix[index_b];
+
+    Matrix *result = additionning_matrix(a, b);
+    if(!result) return;
+
+    add_tab_with_matrix(ctx, result);
 }
 
 static void free_context(appContext *ctx){
