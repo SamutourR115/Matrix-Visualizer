@@ -22,5 +22,4 @@ typedef struct appContext_t appContext;
  */
 void create_window(GtkApplication *app, gpointer userData);
 
-
 #endif

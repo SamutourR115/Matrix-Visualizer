@@ -18,6 +18,13 @@ struct appContext_t{
     GtkStringList *matrix_names;
 };
 
+typedef struct {
+    appContext *ctx;
+    int page;
+    unsigned int row;
+    unsigned int col;
+} CellData;
+
 /**
  * Declaration of static function
  */
@@ -156,6 +163,7 @@ static void free_context(appContext *ctx);
  */
 static void add_tab_with_matrix(appContext *ctx, Matrix *m);
 
+static void on_cell_changed(GtkWidget *widget, gpointer user_data);
 /**
  * Definition of static function
  */
@@ -321,8 +329,18 @@ static void add_tab_with_matrix(appContext *ctx, Matrix *m){
 
     for(unsigned int i = 0; i < get_cols(new_matrix); i++){
         for(unsigned int j = 0; j < get_rows(new_matrix); j++){
+
+            CellData *cell = malloc(sizeof(CellData));
+            cell->ctx = ctx;
+            cell->page = ctx->count;
+            cell->row = j;
+            cell->col = i;
+
             GtkWidget *entry = gtk_entry_new();
+            g_object_set_data_full(G_OBJECT(entry), "cell", cell, g_free);
+            g_signal_connect(entry, "changed", G_CALLBACK(on_cell_changed), cell);
             gtk_grid_attach(GTK_GRID(grid), entry, i, j, 1, 1);
+
         }
     }
 
@@ -377,7 +395,6 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
     }
 }
 
-
 static void on_add_matrices(GtkWidget *widget, gpointer user_data){
     (void)widget;
     appContext *ctx = (appContext *) user_data;
@@ -413,6 +430,16 @@ static void free_context(appContext *ctx){
 
     free(ctx->matrix);
     free(ctx);
+}
+
+static void on_cell_changed(GtkWidget *widget, gpointer user_data){
+    CellData *cell = (CellData *)user_data;
+    if(!cell) return;
+
+    const char *text = gtk_editable_get_text(GTK_EDITABLE(widget));
+    int value = atoi(text);
+
+    
 }
 
 /**

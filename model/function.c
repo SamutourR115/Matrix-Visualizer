@@ -131,3 +131,9 @@ unsigned int get_cols(Matrix *m){
 
     return m->cols;
 }
+
+void set_value(Matrix *m, unsigned int row, unsigned int col, int value){
+    if(!m) return;
+    if(row >= m->rows || col >= m->cols) return;  
+    m->matrix[row][col] = value;
+}

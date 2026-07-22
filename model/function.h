@@ -41,6 +41,22 @@ Matrix *create_matrix(unsigned int rows, unsigned int cols);
 void free_matrix(Matrix *a);
 
 /**
+ * set_value  
+ * 
+ * Set a value in the mtrix m
+ * 
+ * @pre : m != NULL 
+ * @post : change the value in the matix 
+ * 
+ * @param m : Matrix 
+ * @param row : row of the matrix
+ * @param col : col of the matrix
+ * @param value : value who want to be stock
+ * 
+ */
+void set_value(Matrix *m, unsigned int row, unsigned int col, int value);
+
+/**
  * additionning_matrix
  * 
  * Additionning 2 Matrix an return the result
