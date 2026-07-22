@@ -327,20 +327,28 @@ static void add_tab_with_matrix(appContext *ctx, Matrix *m){
     GtkWidget *grid = gtk_grid_new();
     gtk_box_append(GTK_BOX(tab_box), grid);
 
+    ctx->matrix[ctx->count] = new_matrix;
+
     for(unsigned int i = 0; i < get_cols(new_matrix); i++){
         for(unsigned int j = 0; j < get_rows(new_matrix); j++){
 
-            CellData *cell = malloc(sizeof(CellData));
-            cell->ctx = ctx;
-            cell->page = ctx->count;
-            cell->row = j;
-            cell->col = i;
+        CellData *cell = malloc(sizeof(CellData));
+        cell->ctx = ctx;
+        cell->page = ctx->count;
+        cell->row = j;
+        cell->col = i;
 
-            GtkWidget *entry = gtk_entry_new();
-            g_object_set_data_full(G_OBJECT(entry), "cell", cell, g_free);
-            g_signal_connect(entry, "changed", G_CALLBACK(on_cell_changed), cell);
-            gtk_grid_attach(GTK_GRID(grid), entry, i, j, 1, 1);
+        GtkWidget *entry = gtk_entry_new();
 
+        if(m != NULL){
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%d", get_value(new_matrix, j, i));
+            gtk_editable_set_text(GTK_EDITABLE(entry), buf);
+        }
+
+        g_object_set_data_full(G_OBJECT(entry), "cell", cell, g_free);
+        g_signal_connect(entry, "changed", G_CALLBACK(on_cell_changed), cell);
+        gtk_grid_attach(GTK_GRID(grid), entry, i, j, 1, 1);
         }
     }
 
@@ -366,8 +374,6 @@ static void add_tab_with_matrix(appContext *ctx, Matrix *m){
     g_signal_connect(spin_r, "value-changed", G_CALLBACK(on_dimensions_changed), ctx);
     g_signal_connect(spin_c, "value-changed", G_CALLBACK(on_dimensions_changed), ctx);
 
-    ctx->matrix[ctx->count] = new_matrix;
-
     ctx->widgets->grid_matrix[ctx->count] = grid;
 
     ctx->widgets->spin_rows[ctx->count] = spin_r;
@@ -375,6 +381,10 @@ static void add_tab_with_matrix(appContext *ctx, Matrix *m){
 
     ctx->widgets->dropdown_a[ctx->count] = drop_a;
     ctx->widgets->dropdown_b[ctx->count] = drop_b;
+
+    GtkWidget *btn_addition = gtk_button_new_with_label("Addition");
+    g_signal_connect(btn_addition, "clicked", G_CALLBACK(on_add_matrices), ctx);
+    gtk_box_append(GTK_BOX(right_box), btn_addition);
 
     ctx->count++;
 }
@@ -389,7 +399,16 @@ static void clean_and_rebuild_grid(appContext *ctx, int page){
 
     for(unsigned int i = 0; i < get_cols(ctx->matrix[page]); i++){
         for(unsigned int j = 0; j < get_rows(ctx->matrix[page]); j++){
+            CellData *cell = malloc(sizeof(CellData));
+            if(!cell) continue;
+            cell->ctx = ctx;
+            cell->page = page;
+            cell->row = j;
+            cell->col = i;
+
             GtkWidget *entry = gtk_entry_new();
+            g_object_set_data_full(G_OBJECT(entry), "cell", cell, g_free);
+            g_signal_connect(entry, "changed", G_CALLBACK(on_cell_changed), cell);
             gtk_grid_attach(GTK_GRID(ctx->widgets->grid_matrix[page]), entry, i, j, 1, 1);
         }
     }
@@ -401,8 +420,13 @@ static void on_add_matrices(GtkWidget *widget, gpointer user_data){
     if (!ctx) return;
 
     int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(ctx->widgets->notebook));
+    if(page < 0) return;
+
     guint index_a = gtk_drop_down_get_selected(GTK_DROP_DOWN(ctx->widgets->dropdown_a[page]));
     guint index_b = gtk_drop_down_get_selected(GTK_DROP_DOWN(ctx->widgets->dropdown_b[page]));
+
+    if(index_a == GTK_INVALID_LIST_POSITION || index_b == GTK_INVALID_LIST_POSITION) return;
+    if(index_a >= ctx->count || index_b >= ctx->count) return;
 
     Matrix *a = ctx->matrix[index_a];
     Matrix *b = ctx->matrix[index_b];
@@ -415,9 +439,14 @@ static void on_add_matrices(GtkWidget *widget, gpointer user_data){
 
 static void free_context(appContext *ctx){
     if (!ctx) return;
+
     for(unsigned int i = 0; i < ctx->count; i++){
         free_matrix(ctx->matrix[i]);
     }
+    free(ctx->matrix);
+
+    if(ctx->matrix_names)
+        g_object_unref(ctx->matrix_names);
 
     if(ctx->widgets){
         free(ctx->widgets->dropdown_a);
@@ -428,7 +457,6 @@ static void free_context(appContext *ctx){
         free(ctx->widgets);
     }
 
-    free(ctx->matrix);
     free(ctx);
 }
 
@@ -439,13 +467,14 @@ static void on_cell_changed(GtkWidget *widget, gpointer user_data){
     const char *text = gtk_editable_get_text(GTK_EDITABLE(widget));
     int value = atoi(text);
 
-    
+    set_value(cell->ctx->matrix[cell->page], cell->row, cell->col, value);
 }
 
 /**
  * Definition of function
  */
 void create_window(GtkApplication *app, gpointer userData){
+    (void)userData;
     if (!app) return;
 
     appContext *ctx = init_context();

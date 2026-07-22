@@ -137,3 +137,9 @@ void set_value(Matrix *m, unsigned int row, unsigned int col, int value){
     if(row >= m->rows || col >= m->cols) return;  
     m->matrix[row][col] = value;
 }
+
+int get_value(Matrix *m, unsigned int row, unsigned int col){
+    if(m == NULL) { return 0;}
+
+    return m->matrix[row][col];
+}

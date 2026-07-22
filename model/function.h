@@ -1,5 +1,5 @@
-#ifndef  __FUNCTION__
-#define  __FUNCTION__
+#ifndef  MATRIX_FUNCTION_H
+#define  MATRIX_FUNCTION_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -156,4 +156,7 @@ unsigned int get_rows(Matrix *m);
  *      Numbers cols of the matrix m
  */
 unsigned int get_cols(Matrix *m);
-#endif
+
+int get_value(Matrix *m, unsigned int row, unsigned int col);
+
+#endif /* MATRIX_FUNCTION_H */
