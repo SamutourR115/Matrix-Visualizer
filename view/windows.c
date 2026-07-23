@@ -164,6 +164,8 @@ static void free_context(appContext *ctx);
 static void add_tab_with_matrix(appContext *ctx, Matrix *m);
 
 static void on_cell_changed(GtkWidget *widget, gpointer user_data);
+
+static void on_multiply_matrices(GtkWidget *widget, gpointer user_data);
 /**
  * Definition of static function
  */
@@ -386,6 +388,10 @@ static void add_tab_with_matrix(appContext *ctx, Matrix *m){
     g_signal_connect(btn_addition, "clicked", G_CALLBACK(on_add_matrices), ctx);
     gtk_box_append(GTK_BOX(right_box), btn_addition);
 
+    GtkWidget *btn_multiply = gtk_button_new_with_label("Multiplication");
+    g_signal_connect(btn_multiply, "clicked", G_CALLBACK(on_multiply_matrices), ctx);
+    gtk_box_append(GTK_BOX(right_box), btn_multiply);
+
     ctx->count++;
 }
 
@@ -432,6 +438,29 @@ static void on_add_matrices(GtkWidget *widget, gpointer user_data){
     Matrix *b = ctx->matrix[index_b];
 
     Matrix *result = additionning_matrix(a, b);
+    if(!result) return;
+
+    add_tab_with_matrix(ctx, result);
+}
+
+static void on_multiply_matrices(GtkWidget *widget, gpointer user_data){
+    (void)widget;
+    appContext *ctx = (appContext *) user_data;
+    if (!ctx) return;
+
+    int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(ctx->widgets->notebook));
+    if(page < 0) return;
+
+    guint index_a = gtk_drop_down_get_selected(GTK_DROP_DOWN(ctx->widgets->dropdown_a[page]));
+    guint index_b = gtk_drop_down_get_selected(GTK_DROP_DOWN(ctx->widgets->dropdown_b[page]));
+
+    if(index_a == GTK_INVALID_LIST_POSITION || index_b == GTK_INVALID_LIST_POSITION) return;
+    if(index_a >= ctx->count || index_b >= ctx->count) return;
+
+    Matrix *a = ctx->matrix[index_a];
+    Matrix *b = ctx->matrix[index_b];
+
+    Matrix *result = multpily_matrix(a, b);
     if(!result) return;
 
     add_tab_with_matrix(ctx, result);
